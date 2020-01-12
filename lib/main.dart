@@ -14,9 +14,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Material App',
       home: Scaffold(
-        appBar: AppBar(
-          title: Text('Material App Bar'),
-        ),
         body: NfcScan(),
       ),
     );
@@ -39,8 +36,9 @@ class _NfcScanState extends State<NfcScan> {
         circleId: CircleId("player"),
         center: LatLng(45.521563, -122.677433),
         strokeColor: Colors.blue,
-        radius: 400,
-        fillColor: Colors.blue.withOpacity(0.5))
+        strokeWidth: 1,
+        radius: 200,
+        fillColor: Colors.blue.withOpacity(0.2))
   ];
 
   Completer<GoogleMapController> _mapController = Completer();
@@ -52,12 +50,8 @@ class _NfcScanState extends State<NfcScan> {
         _circles.indexWhere((c) => c.circleId.value == 'player');
     Circle currentPlayerCircle = _circles[playerCircleIndex];
     setState(() {
-      _circles[playerCircleIndex] = Circle(
-        center: locationDataToLatLang(location),
-        circleId: currentPlayerCircle.circleId,
-        radius: currentPlayerCircle.radius,
-        fillColor: currentPlayerCircle.fillColor,
-      );
+      _circles[playerCircleIndex] = currentPlayerCircle.copyWith(
+          centerParam: locationDataToLatLang(location));
     });
   }
 
@@ -65,9 +59,16 @@ class _NfcScanState extends State<NfcScan> {
     return LatLng(ld.latitude, ld.longitude);
   }
 
+  _initLocation() async {
+    LocationData loc = await location.getLocation();
+    _currentLocation = loc;
+    _updatePlayerCircle(loc);
+  }
+
   @override
   initState() {
     super.initState();
+    _initLocation();
     location.onLocationChanged().listen((LocationData currentLocation) {
       setState(() {
         _currentLocation = currentLocation;
@@ -75,13 +76,6 @@ class _NfcScanState extends State<NfcScan> {
       _updatePlayerCircle(currentLocation);
     });
     FlutterNfcReader.onTagDiscovered().listen((onData) async {
-      if (_currentLocation == null) {
-        LocationData loc = await location.getLocation();
-        setState(() {
-          _currentLocation = loc;
-        });
-        _updatePlayerCircle(loc);
-      }
       print(onData.id);
       print(onData.content);
       print(_currentLocation.latitude.toString() +
@@ -102,7 +96,7 @@ class _NfcScanState extends State<NfcScan> {
       final CameraPosition pos = CameraPosition(
           target: LatLng(_currentLocation.latitude, _currentLocation.longitude),
           //tilt: 59.440717697143555,
-          zoom: 19.0);
+          zoom: 17.0);
       final GoogleMapController controller = await _mapController.future;
       controller.animateCamera(CameraUpdate.newCameraPosition(pos));
 
@@ -122,29 +116,34 @@ class _NfcScanState extends State<NfcScan> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
       children: <Widget>[
-        Text("test"),
         //problem med hot restart. kartan försvinner då.
         //fungerar igen vid omstart eller om man lägger till eller tar bort en widget som wrappar GoogleMap()
         Container(
-          height: 500,
           child: GoogleMap(
             onMapCreated: (GoogleMapController controller) {
               _mapController.complete(controller);
             },
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
-
             //kan användas för heatmap och för att se användarens search radius. Det är inom den radiusen som användaren kan se nya publika nfc chip
             //finns även plygons
             circles: _circles.toSet(),
             initialCameraPosition: CameraPosition(
               target: LatLng(45.521563, -122.677433),
-              zoom: 11.0,
+              zoom: 17.0,
             ),
             markers: _markers.values.toSet(),
+          ),
+        ),
+        SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Text(
+              "test",
+              style: TextStyle(fontSize: 30),
+            ),
           ),
         ),
       ],
