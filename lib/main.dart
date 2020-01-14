@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter/services.dart';
 
+import 'data/emojis.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -141,7 +143,7 @@ class _NfcScanState extends State<NfcScan> {
           child: Align(
             alignment: Alignment.topCenter,
             child: Text(
-              "test",
+              EMOJIS[8].code,
               style: TextStyle(fontSize: 30),
             ),
           ),
