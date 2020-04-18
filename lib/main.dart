@@ -5,6 +5,8 @@ import 'package:flutter_nfc_reader/flutter_nfc_reader.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter/services.dart';
+import 'package:nfc_caching/models/chip.dart';
+import 'package:nfc_caching/utils/generator.dart';
 
 import 'data/emojis.dart';
 
@@ -78,25 +80,31 @@ class _NfcScanState extends State<NfcScan> {
       _updatePlayerCircle(currentLocation);
     });
     FlutterNfcReader.onTagDiscovered().listen((onData) async {
-      print(onData.id);
-      print(onData.content);
-      print(_currentLocation.latitude.toString() +
-          ", " +
-          _currentLocation.longitude.toString());
-      print(_currentLocation.altitude);
-      print(_currentLocation.accuracy);
+      final LatLng latLng =
+          LatLng(_currentLocation.latitude, _currentLocation.longitude);
+
+      ChipData chip = ChipData.fromTagging(onData.id, latLng);
 
       final marker = Marker(
+        // onTap: () => {
+        //   showDialog(
+        //     context: context,
+        //     builder: (BuildContext context) => AlertDialog(
+        //       title: Text(chip.title),
+        //       content: Text(chip.subtitle),
+        //     ),
+        //   )
+        // },
         markerId: MarkerId(onData.id),
-        position: LatLng(_currentLocation.latitude, _currentLocation.longitude),
+        position: latLng,
         infoWindow: InfoWindow(
-          title: onData.id,
-          snippet: "NFC TEST",
+          title: chip.title,
+          snippet: chip.subtitle,
         ),
       );
 
       final CameraPosition pos = CameraPosition(
-          target: LatLng(_currentLocation.latitude, _currentLocation.longitude),
+          target: latLng,
           //tilt: 59.440717697143555,
           zoom: 17.0);
       final GoogleMapController controller = await _mapController.future;
@@ -143,7 +151,7 @@ class _NfcScanState extends State<NfcScan> {
           child: Align(
             alignment: Alignment.topCenter,
             child: Text(
-              EMOJIS[8].code,
+              "TEST",
               style: TextStyle(fontSize: 30),
             ),
           ),
